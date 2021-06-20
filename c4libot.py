@@ -57,7 +57,7 @@ class TelegramBot:
 
 	#calculator using regex
 
-	def calc(update, context):
+	def calc(self, update, context):
 		x = re.sub("[^0-9\+\-\*/\.\(\)]", "", "".join(context.args).replace("^", "**"))
 		try:
 			y = eval(x)
