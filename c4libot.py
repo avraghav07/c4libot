@@ -1,7 +1,7 @@
 #Telegram bot that does 'stuff'
 
 #libraries
-from Py.Games.BlackJack import BlackjackGame
+from Games.BlackJack import BlackjackGame
 from Games import BlackJack as blackjack
 from telegram.ext import MessageHandler, Filters, CommandHandler, Updater
 from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardButton, InlineKeyboardMarkup
