@@ -9,8 +9,7 @@ import re
 
 class TelegramBot:
 
-
-	#markup keyboard for blackjack game
+	# Markup keyboard for blackjack game
 
 	blackjackMarkup = [[
 		InlineKeyboardButton(text = "+50", callback_data="blackjack.place50"),
@@ -23,7 +22,7 @@ class TelegramBot:
 		InlineKeyboardButton(text = "End Game", callback_data="blackjack.end")
 	]]
 
-	#constructor with the updater and the handlers
+	# Constructor with the updater and the handlers
 
 	def __init__(self):
 		self.updater = Updater(token = os.environ["TELEGRAM_BOT_TOKEN"], use_context = True)
@@ -41,7 +40,7 @@ class TelegramBot:
 		self.updater.dispatcher.add_handler(CallbackQueryHandler(self.callbackQueryHandler))
 		self.updater.start_polling()
 
-	#some functions to make life easer
+	# Some functions to make life easer
 
 	def getUserName(self, user):
 		try:
@@ -66,7 +65,7 @@ class TelegramBot:
 	def start(self, update, context):
 		self.sendMessage(update.effective_chat, "Hello, I am property of the mathgod - caliber")
 
-	#calculator using regex
+	# Calculator using regex
 
 	def calc(self, update, context):
 		x = re.sub("[^0-9\+\-\*/\.\(\)]", "", "".join(context.args).replace("^", "**"))
@@ -76,7 +75,7 @@ class TelegramBot:
 			y = "Invalid Input."
 		update.effective_message.reply_text(y)
 
-	#cat spam function that sends a cat pic (taken from a free api using request.get) every 5 seconds using a global timer for every chat
+	# Cat spam function that sends a cat pic (taken from a free api using request.get) every 5 seconds using a global timer for every chat
 
 	def catto(self, update, context):
 		data = requests.get("https://api.thecatapi.com/v1/images/search").json()
@@ -91,7 +90,7 @@ class TelegramBot:
 			self.timers[update.effective_chat.id].cancel()
 			del self.timers[update.effective_chat.id]
 
-	#play command to play games (just blackjack for now)
+	# Play command to play games (just blackjack for now)
 
 	def play(self, update, context):
 		query = " ".join(context.args).strip().lower()
@@ -108,12 +107,11 @@ class TelegramBot:
 			self.sendMessage(update.effective_chat, "Invalid game", update.message.message_id)
 			return
 
-
 	def answerCallbackQuery(self, callbackQuery, text):
 		callbackQuery.answer(text)
 		print("[Telegram] [Callback Query Answer] [" + self.getUserName(callbackQuery.from_user) + "] " + text)
 
-	#callback query handler for the inline keyboard
+	# Callback query handler for the inline keyboard
 
 	def callbackQueryHandler(self, update, context):
 		if (not update.callback_query):
@@ -180,7 +178,7 @@ class TelegramBot:
 						else:
 							self.answerCallbackQuery(update.callback_query, f"You only have {player.chips} chips left.")
 
-	#blackjack functions
+	# Blackjack functions
 
 	def endBlackjackGame(self, game, noBets = False):
 		if (not game.roundStarted):
@@ -229,7 +227,6 @@ class TelegramBot:
 		game.startRound()
 		self.sendMessage(game.message.chat, f"The round has begun. Everyone has been dealt two cards.\nThe dealer's first card is {game.dealerHand.cards[0].toString()}.")
 		self.askBlackjackPlayer(game)
-
 
 	def askBlackjackPlayer(self, game, edit = False, player = None, message = None):
 		if (not player):
