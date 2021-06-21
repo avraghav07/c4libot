@@ -127,7 +127,10 @@ class TelegramBot:
 				if (not player or activeGame.currentPlayer.userID != userID):
 					self.answerCallbackQuery(update.callback_query, "It's not your turn.")
 					return
-				self.skipBlackjackPlayerTimer.cancel()
+				try:
+					self.skipBlackjackPlayerTimer.cancel()
+				except:
+					pass
 				nextPlayerExists = False
 				if (query == "blackjack.hit"):
 					self.answerCallbackQuery(update.callback_query, "You decided to hit.")

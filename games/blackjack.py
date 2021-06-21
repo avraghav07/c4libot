@@ -128,9 +128,8 @@ class Game:
 
 	def processDecision(self, decision):
 		if (decision == PlayerDecision.Hit):
-			player = self.players[self.currentPlayerIndex]
-			player.hand.addCard(self.deck.drawCard())
-			if (player.hand.isBust()):
+			self.currentPlayer.hand.addCard(self.deck.drawCard())
+			if (self.currentPlayer.hand.isBust()):
 				self.currentPlayer.roundResult = RoundResult.Loss
 				return self.nextPlayer()
 		elif (decision == PlayerDecision.Stand):
