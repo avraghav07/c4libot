@@ -4,16 +4,13 @@
 from games import blackjack
 from telegram.ext import CommandHandler, Updater, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-import logging
-import random
 import requests
 import threading
 import os
 import re
 
-
 class TelegramBot:
-	
+
 	blackjackMarkup = [[
 		InlineKeyboardButton(text = "+50", callback_data="blackjack.place50"),
 		InlineKeyboardButton(text = "+100", callback_data="blackjack.place100"),
@@ -24,9 +21,11 @@ class TelegramBot:
 		InlineKeyboardButton(text = "-All", callback_data="blackjack.removeAll"),
 		InlineKeyboardButton(text = "End Game", callback_data="blackjack.end")
 	]]
-	
+
+	updater = Updater(token = os.environ["TELEGRAM_BOT_TOKEN"], use_context = True)
+
 	def __init__(self):
-		updater = Updater(token = os.environ["TELEGRAM_BOT_TOKEN"], use_context = True)
+
 		self.timers = {}
 		self.activeGames = {"blackjack" : {}}
 		self.blackjackDelay = 15
@@ -41,16 +40,25 @@ class TelegramBot:
 		self.updater.dispatcher.add_handler(CallbackQueryHandler(self.callbackQueryHandler))
 		self.updater.start_polling()
 
-	#setting up logging for easier debugging 
+	def getUserName(self, user):
+		try:
+			return "@" + user.username
+		except:
+			return user.first_name
 
-	logging.basicConfig(format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s", level = logging.INFO)
+	def logMessage(self, message, edit = False):
+		fromUser = self.getUserName(message.from_user)
+		print("[Telegram] " + ("[Edit] " if edit else "") + "[" + (message.chat.title if message.chat.type != "private" else str(message.chat.id)) + "] " + fromUser + ": " + message.text.replace("\n", "\n> "))
 
-	#start function
+	def editMessageText(self, message, text, **keywordArguments):
+		editedMessage = message.edit_text(text, parse_mode = "HTML", disable_web_page_preview = True, **keywordArguments)
+		self.logMessage(editedMessage, True)
+		return editedMessage
 
 	def sendMessage(self, chat, text, replyTo = None, **keywordArguments):
-			sentMessage = chat.send_message(text, parse_mode = "HTML", disable_web_page_preview = True, reply_to_message_id = replyTo, **keywordArguments)
-			self.logMessage(sentMessage)
-			return sentMessage
+		sentMessage = chat.send_message(text, parse_mode = "HTML", disable_web_page_preview = True, reply_to_message_id = replyTo, **keywordArguments)
+		self.logMessage(sentMessage)
+		return sentMessage
 
 	def start(self, update):
 		self.sendMessage(update.effective_chat, "Hello, I am property of the mathgod - caliber")
@@ -76,25 +84,28 @@ class TelegramBot:
 		self.timers[update.effective_chat.id].start()
 
 	def stopCat(self, update, context):
-		global timers
 		if update.effective_chat.id in self.timers and self.timers[update.effective_chat.id].is_alive():
 			self.timers[update.effective_chat.id].cancel()
-			del self.timers[update.effective_chat.id]     
+			del self.timers[update.effective_chat.id]
 
 	def playCommand(self, update, context):
 		query = " ".join(context.args).strip().lower()
 		if (query == "blackjack"):
 			if (update.effective_chat.id in self.activeGames["blackjack"]):
 				self.sendMessage(update.effective_chat, "Another game of Blackjack is already active in this chat. To stop the game, type /input stop.", update.message.message_id)
-				return	
+				return
 			sentMessage = self.sendMessage(update.effective_chat, f"<b>Blackjack</b>\n\nThe first round begins in {self.blackjackDelay} seconds.\nEach player starts with {self.blackjackStartingChips} chips.\nPlace your bets!", reply_markup = InlineKeyboardMarkup(inline_keyboard = self.blackjackMarkup))
-			game = blackjack.BlackjackGame(sentMessage, update.effective_user.id)
+			game = blackjack.Game(sentMessage, update.effective_user.id)
 			self.activeGames["blackjack"][update.effective_chat.id] = game
 			self.blackjackTimer = threading.Timer(self.blackjackDelay, self.startBlackjackRound, [game])
-			self.blackjackTimer.start()	
+			self.blackjackTimer.start()
 		else:
 			self.sendMessage(update.effective_chat, "Invalid game", update.message.message_id)
-			return	
+			return
+
+	def answerCallbackQuery(self, callbackQuery, text):
+		callbackQuery.answer(text)
+		print("[Telegram] [Callback Query Answer] [" + self.getUserName(callbackQuery.from_user) + "] " + text)
 
 	def callbackQueryHandler(self, update, context):
 		if (not update.callback_query):
@@ -104,13 +115,17 @@ class TelegramBot:
 			activeGame = self.activeGames["blackjack"].get(update.effective_chat.id)
 			userID = update.effective_user.id
 			if (query == "blackjack.end"):
-				self.endBlackjackGame()
-				self.answerCallbackQuery(update.callback_query, "You have ended the game.")
+				allowedUsers = [762076088]
+				if (userID in allowedUsers):
+					self.endBlackjackGame(activeGame)
+					self.answerCallbackQuery(update.callback_query, "You ended the game.")
+				else:
+					self.answerCallbackQuery(update.callback_query, "You don't have permission to end the game.")
 				return
-			player = self.activeGames.players.get(userID)
+			player = activeGame.players.get(userID)
 			if (activeGame.roundStarted()):
 				if (query not in ["blackjack.hit", "blackjack.stand"]):
-						return
+					return
 				if (not player or activeGame.currentPlayer.userID != userID):
 					self.answerCallbackQuery(update.callback_query, "It's not your turn.")
 					return
@@ -118,25 +133,25 @@ class TelegramBot:
 				nextPlayerExists = False
 				if (query == "blackjack.hit"):
 					self.answerCallbackQuery(update.callback_query, "You decided to hit.")
-					nextPlayerExists = activeGame.processDecision(blackjack.Game.PlayerDecision.Hit)
+					nextPlayerExists = activeGame.processDecision(blackjack.PlayerDecision.Hit)
 					self.askBlackjackPlayer(activeGame, True, player, update.effective_message)
 				elif (query == "blackjack.stand"):
 					self.answerCallbackQuery(update.callback_query, "You decided to stand.")
-					nextPlayerExists = activeGame.processDecision(blackjack.Game.PlayerDecision.Stand)
+					nextPlayerExists = activeGame.processDecision(blackjack.PlayerDecision.Stand)
 					self.editMessageText(update.effective_message, f"{player.name}, your hand is valued at {player.hand.getValue()}.\n{player.hand.toString()}\n\nYou decided to stand.")
 				if (nextPlayerExists):
 					self.askBlackjackPlayer(activeGame)
 				elif (nextPlayerExists == False):
-					self.sendBlackjackResults(activeGame)
+					self.sendBlackjackResult(activeGame)
 			else:
-				chips = {"blackjack.place50": 50, "blackjack.place100": 100, "blackjack.place250": 250, "blackjack.place500": 500, "blackjack.placeAll": -1, "blackjack.removeAll": -2}.get(query, 0)		
+				chips = {"blackjack.place50": 50, "blackjack.place100": 100, "blackjack.place250": 250, "blackjack.place500": 500, "blackjack.placeAll": -1, "blackjack.removeAll": -2}.get(query, 0)
 				if (not chips):
-						return
+					return
 				if (not player):
-					player = blackjack.Game.Player(userID, update.effective_user.first_name, self.blackjackStartingChips)
+					player = blackjack.Player(userID, update.effective_user.first_name, self.blackjackStartingChips)
 					activeGame.players[userID] = player
 				if (chips == -1):
-						chips = player.chips
+					chips = player.chips
 				elif (chips == -2):
 					chips = -player.currentBet
 				if (player.placeBet(chips)):
@@ -152,12 +167,12 @@ class TelegramBot:
 						if (player.chips == 0):
 							self.answerCallbackQuery(update.callback_query, "You don't have any chips left.")
 						else:
-							self.answerCallbackQuery(update.callback_query, f"You only have {player.chips} chips left.")		
+							self.answerCallbackQuery(update.callback_query, f"You only have {player.chips} chips left.")
 
 	def endBlackjackGame(self, game, noBets = False):
 		if (not game.roundStarted):
 			self.updateBlackjackBetMessage(game, True)
-		noBets = "No one placed any bets. " if noBets else ""	
+		noBets = "No one placed any bets. " if noBets else ""
 		if (len(game.players) > 0):
 			playersText = "\n\nFinal Chip Balances: "
 			playersSorted = dict(sorted(game.players.items(), key = lambda x: (x[1].chips + x[1].currentBet), reverse = True))
@@ -177,13 +192,13 @@ class TelegramBot:
 		results = ""
 		for userID, player in game.players.items():
 			results += f"\n{player.name} [{player.hand.getValue()}] "
-			if (player.roundResult == blackjack.Game.RoundResult.Win):
+			if (player.roundResult == blackjack.RoundResult.Win):
 				results += f"has won {player.currentBet} chips and now has {player.chips + (player.currentBet * 2)} chips."
-			elif (player.roundResult == blackjack.Game.RoundResult.Loss):
+			elif (player.roundResult == blackjack.RoundResult.Loss):
 				results += f"has lost {player.currentBet} chips and has {player.chips} chips left."
-			elif (player.roundResult == blackjack.Game.RoundResult.Push):
+			elif (player.roundResult == blackjack.RoundResult.Push):
 				results += f"has tied with the dealer and has {player.chips} chips."
-			elif (player.roundResult == blackjack.Game.RoundResult.NoResult):
+			elif (player.roundResult == blackjack.RoundResult.NoResult):
 				results += f"did not participate and has {player.chips} chips."
 		self.sendMessage(game.message.chat, f"The dealer's hand is valued at {game.dealerHand.getValue()}.\n{game.dealerHand.toString()}{isBust}\n{results}\n\nThe round has ended.")
 		game.processResult()
@@ -221,12 +236,12 @@ class TelegramBot:
 
 	def skipBlackjackPlayer(self, game, message):
 		player = game.currentPlayer
-		nextPlayerExists = game.processDecision(blackjack.Game.PlayerDecision.Stand)
+		nextPlayerExists = game.processDecision(blackjack.PlayerDecision.Stand)
 		self.editMessageText(message, f"{player.name}, your hand is valued at {player.hand.getValue()}.\n{player.hand.toString()}\n\nYou decided to stand (20 second timeout).")
 		if (nextPlayerExists):
 			self.askBlackjackPlayer(game)
 		elif (nextPlayerExists == False):
-			self.sendBlackjackResults(game)
+			self.sendBlackjackResult(game)
 
 	def updateBlackjackBetMessage(self, game, roundStarting = False):
 		playersText = ""
