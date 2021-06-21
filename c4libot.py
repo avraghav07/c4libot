@@ -34,7 +34,7 @@ class TelegramBot:
 		self.updater.dispatcher.add_handler(CommandHandler("calc", self.calc))
 		self.updater.dispatcher.add_handler(CommandHandler("catto", self.catto))
 		self.updater.dispatcher.add_handler(CommandHandler("stopCat", self.stopCat))
-		self.updater.dispatcher.add_handler(CommandHandler("play", self.play))
+		self.updater.dispatcher.add_handler(CommandHandler("blackjack", self.blackjack))
 		self.updater.dispatcher.add_handler(CallbackQueryHandler(self.callbackQueryHandler))
 		self.updater.start_polling()
 
@@ -58,7 +58,7 @@ class TelegramBot:
 		self.logMessage(sentMessage)
 		return sentMessage
 
-	def start(self, update):
+	def start(self, update, context):
 		self.sendMessage(update.effective_chat, "Hello, I am property of the mathgod - caliber")
 
 	#calculator using regex
@@ -86,7 +86,7 @@ class TelegramBot:
 			self.timers[update.effective_chat.id].cancel()
 			del self.timers[update.effective_chat.id]
 
-	def play(self, update, context):
+	def blackjack(self, update, context):
 		query = " ".join(context.args).strip().lower()
 		if (query == "blackjack"):
 			if (update.effective_chat.id in self.activeGames["blackjack"]):
