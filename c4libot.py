@@ -1,5 +1,3 @@
-#Telegram bot that does 'stuff'
-
 #libraries
 from games import blackjack
 from telegram.ext import CommandHandler, Updater, CallbackQueryHandler
@@ -11,6 +9,9 @@ import re
 
 class TelegramBot:
 
+
+	#markup keyboard for blackjack game
+
 	blackjackMarkup = [[
 		InlineKeyboardButton(text = "+50", callback_data="blackjack.place50"),
 		InlineKeyboardButton(text = "+100", callback_data="blackjack.place100"),
@@ -21,6 +22,8 @@ class TelegramBot:
 		InlineKeyboardButton(text = "-All", callback_data="blackjack.removeAll"),
 		InlineKeyboardButton(text = "End Game", callback_data="blackjack.end")
 	]]
+
+	#constructor with the updater and the handlers
 
 	def __init__(self):
 		self.updater = Updater(token = os.environ["TELEGRAM_BOT_TOKEN"], use_context = True)
@@ -37,6 +40,8 @@ class TelegramBot:
 		self.updater.dispatcher.add_handler(CommandHandler("play", self.play))
 		self.updater.dispatcher.add_handler(CallbackQueryHandler(self.callbackQueryHandler))
 		self.updater.start_polling()
+
+	#some functions to make life easer
 
 	def getUserName(self, user):
 		try:
@@ -86,6 +91,8 @@ class TelegramBot:
 			self.timers[update.effective_chat.id].cancel()
 			del self.timers[update.effective_chat.id]
 
+	#play command to play games (just blackjack for now)
+
 	def play(self, update, context):
 		query = " ".join(context.args).strip().lower()
 		if (query == "blackjack"):
@@ -101,9 +108,12 @@ class TelegramBot:
 			self.sendMessage(update.effective_chat, "Invalid game", update.message.message_id)
 			return
 
+
 	def answerCallbackQuery(self, callbackQuery, text):
 		callbackQuery.answer(text)
 		print("[Telegram] [Callback Query Answer] [" + self.getUserName(callbackQuery.from_user) + "] " + text)
+
+	#callback query handler for the inline keyboard
 
 	def callbackQueryHandler(self, update, context):
 		if (not update.callback_query):
@@ -169,6 +179,8 @@ class TelegramBot:
 							self.answerCallbackQuery(update.callback_query, "You don't have any chips left.")
 						else:
 							self.answerCallbackQuery(update.callback_query, f"You only have {player.chips} chips left.")
+
+	#blackjack functions
 
 	def endBlackjackGame(self, game, noBets = False):
 		if (not game.roundStarted):

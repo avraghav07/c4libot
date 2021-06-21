@@ -1,6 +1,8 @@
 import random
 from enum import Enum
 
+#Enums for cleaner code
+
 class PlayerDecision(Enum):
 	Hit = 1
 	Stand = 2
@@ -11,6 +13,7 @@ class RoundResult(Enum):
 	Loss = 3
 	Push = 4
 
+#Classes for each type of object
 
 class Card:
 
@@ -71,7 +74,7 @@ class Hand:
 		handStrings = []
 		for card in self.cards:
 			handStrings.append(card.toString())
-		return (", ".join(handStrings) + f", [{self.getValue()}]")
+		return (", ".join(handStrings))
 
 class Player:
 
