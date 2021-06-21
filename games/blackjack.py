@@ -3,7 +3,7 @@ from enum import Enum
 
 class PlayerDecision(Enum):
 	Hit = 1
-	Stay = 2
+	Stand = 2
 
 class RoundResult(Enum):
 	NoResult = 1
@@ -59,7 +59,7 @@ class Hand:
 				numberOfAces += 1
 				valueToAdd = 11
 			handValue += valueToAdd
-		for x in range(numberOfAces):
+		for _ in range(numberOfAces):
 			if (handValue > 21):
 				handValue -= 10
 		return handValue
@@ -75,8 +75,9 @@ class Hand:
 
 class Player:
 
-	def __init__(self, ID, chips):
+	def __init__(self, name, ID, chips):
 		self.ID = ID
+		self.name = name
 		self.chips = chips
 		self.currentBet = 0
 		self.hand = Hand()
@@ -103,9 +104,10 @@ class Game:
 	def __init__(self, message, starterUserID):
 		self.message = message
 		self.starterUserID = starterUserID
-		self.starterd = False
+		self.started = False
 		self.roundStarted = False
 		self.players = {}
+		self.currentPlayer = None
 		self.currentPlayerIndex = -1
 		self.dealerHand = Hand()
 		self.deck = Deck()
@@ -115,7 +117,7 @@ class Game:
 		self.started = True
 		self.roundStarted = True
 		self.deck.shuffle()
-		for x in range(2):
+		for _ in range(2):
 			self.dealHands()
 
 	def dealHands(self):
@@ -126,14 +128,15 @@ class Game:
 
 	def processDecision(self, decision):
 		if (decision == PlayerDecision.Hit):
-			self.currentPlayer.hand.addCard(self.deck.drawCard())
-			if (self.currentPlayer.hand.isBust()):
+			player = self.players[self.currentPlayerIndex]
+			player.hand.addCard(self.deck.drawCard())
+			if (player.hand.isBust()):
 				self.currentPlayer.roundResult = RoundResult.Loss
 				return self.nextPlayer()
 		elif (decision == PlayerDecision.Stand):
 			return self.nextPlayer()
 
-	def nextPlayer(self):		
+	def nextPlayer(self):
 		self.currentPlayerIndex += 1
 		if (self.currentPlayerIndex == len(self.players)):
 			self.endRound()
@@ -141,7 +144,7 @@ class Game:
 		self.currentPlayer = self.players[list(self.players.keys())[self.currentPlayerIndex]]
 		if (self.currentPlayer.currentBet == 0):
 			return self.nextPlayer()
-		return True	
+		return True
 
 	def endRound(self):
 		while (self.dealerHand.getValue() <= 16):
@@ -162,11 +165,10 @@ class Game:
 				else:
 					player.roundResult = RoundResult.Push
 			player.processResult()
-			
+
 	def processResult(self):
 		for userID, player in self.players.items():
 			player.processResult()
 		self.dealerHand.clear()
 		self.currentPlayerIndex = -1
 		self.roundStarted = False
-
