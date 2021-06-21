@@ -22,10 +22,8 @@ class TelegramBot:
 		InlineKeyboardButton(text = "End Game", callback_data="blackjack.end")
 	]]
 
-	updater = Updater(token = os.environ["TELEGRAM_BOT_TOKEN"], use_context = True)
-
 	def __init__(self):
-
+		self.updater = Updater(token = os.environ["TELEGRAM_BOT_TOKEN"], use_context = True)
 		self.timers = {}
 		self.activeGames = {"blackjack" : {}}
 		self.blackjackDelay = 15
@@ -36,7 +34,7 @@ class TelegramBot:
 		self.updater.dispatcher.add_handler(CommandHandler("calc", self.calc))
 		self.updater.dispatcher.add_handler(CommandHandler("catto", self.catto))
 		self.updater.dispatcher.add_handler(CommandHandler("stopCat", self.stopCat))
-		self.updater.dispatcher.add_handler(CommandHandler("playCommand", self.playCommand))
+		self.updater.dispatcher.add_handler(CommandHandler("play", self.play))
 		self.updater.dispatcher.add_handler(CallbackQueryHandler(self.callbackQueryHandler))
 		self.updater.start_polling()
 
@@ -88,7 +86,7 @@ class TelegramBot:
 			self.timers[update.effective_chat.id].cancel()
 			del self.timers[update.effective_chat.id]
 
-	def playCommand(self, update, context):
+	def play(self, update, context):
 		query = " ".join(context.args).strip().lower()
 		if (query == "blackjack"):
 			if (update.effective_chat.id in self.activeGames["blackjack"]):
@@ -269,4 +267,4 @@ class TelegramBot:
 				self.blackjackTimer.start()
 		game.message = self.editMessageText(game.message, initialText + playersText, reply_markup = replyMarkup)
 
-	#command handlers
+TelegramBot()
