@@ -1,4 +1,4 @@
-```#calibot```
+# calibot
 
 A Telegram bot that does stuff -
 
@@ -8,7 +8,7 @@ Can do basic Arithmetic!
 
 Spams your personal and group DMs with cat pics!
 
-```##Games```
+## Games
 
 * Blackjack
 * More to come in the future 
