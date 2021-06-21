@@ -75,8 +75,8 @@ class Hand:
 
 class Player:
 
-	def __init__(self, name, ID, chips):
-		self.ID = ID
+	def __init__(self, name, userID, chips):
+		self.userID = userID
 		self.name = name
 		self.chips = chips
 		self.currentBet = 0
