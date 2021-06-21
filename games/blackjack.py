@@ -163,7 +163,6 @@ class Game:
 					player.roundResult = RoundResult.Win
 				else:
 					player.roundResult = RoundResult.Push
-			player.processResult()
 
 	def processResult(self):
 		for userID, player in self.players.items():
