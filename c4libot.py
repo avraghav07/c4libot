@@ -121,7 +121,7 @@ class TelegramBot:
 					self.answerCallbackQuery(update.callback_query, "You don't have permission to end the game.")
 				return
 			player = activeGame.players.get(userID)
-			if (activeGame.roundStarted()):
+			if (activeGame.roundStarted):
 				if (query not in ["blackjack.hit", "blackjack.stand"]):
 					return
 				if (not player or activeGame.currentPlayer.userID != userID):
@@ -179,7 +179,10 @@ class TelegramBot:
 		else:
 			playersText = ""
 		self.sendMessage(game.message.chat, f"<b>Blackjack</b>\n\n{noBets}The game has ended." + playersText)
-		self.blackjackTimer.cancel()
+		try:
+			self.blackjackTimer.cancel()
+		except:
+			pass
 		self.skipBlackjackPlayerTimer.cancel()
 		del self.activeGames["blackjack"][game.message.chat.id]
 
