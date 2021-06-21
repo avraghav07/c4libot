@@ -146,7 +146,7 @@ class TelegramBot:
 				if (not chips):
 					return
 				if (not player):
-					player = blackjack.Player(userID, update.effective_user.first_name, self.blackjackStartingChips)
+					player = blackjack.Player(update.effective_user.first_name, userID, self.blackjackStartingChips)
 					activeGame.players[userID] = player
 				if (chips == -1):
 					chips = player.chips
