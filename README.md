@@ -1,4 +1,4 @@
-# calibot
+# c4libot
 
 A Telegram bot that does stuff -
 
